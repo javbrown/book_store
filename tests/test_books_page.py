@@ -28,6 +28,13 @@ def test_books_form(page: Page):
     connection = DatabaseConnection()
     connection.connect()
     connection.seed("./seeds/books.sql")
+    connection.execute("TRUNCATE TABLE users;")
+    connection.execute("INSERT INTO users (username, password) values ('test', '1234');")
+
+    page.goto("http://localhost:5001/sessions/new")
+    page.get_by_label("username").fill("test")
+    page.get_by_label("password").fill("1234")
+    page.get_by_role("button", name='login').click()
     page.goto("http://localhost:5001/books")
     page.get_by_label('Title').fill("Seires of unfortunate events")
     page.get_by_label("Author").fill("limmeny Snicket")
@@ -35,6 +42,6 @@ def test_books_form(page: Page):
 
     books = page.locator('li')
     new_book = books.all_inner_texts()[-1]
-    assert new_book == "Seires of unfortunate events\n\nBy limmeny Snicket"
+    assert new_book == "Seires of unfortunate events\n\nBy limmeny Snicket\n\nX"
 
 

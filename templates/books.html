@@ -35,6 +35,10 @@
         <li>
             <h4>{{ book.title }}</h4>
             <p>By {{ book.author }}</p>
+            <form method="POST" action="/books/delete">
+                <input type="hidden" name="id" value="{{ book.id }}">
+                <button type="submit" name="submit" value="delete">X</button>
+            </form>
         </li>
         {% endfor %}
     </ul>

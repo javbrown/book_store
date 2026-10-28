@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
 from database_connection import *
 from book_repo import *
 from user_repo import *
+from login_required import *
 
 
 
@@ -9,6 +10,7 @@ from user_repo import *
 app = Flask(__name__)
 
 # NEW PART START
+app.secret_key = "some_really_secret_key"
 
 
 # Declares a route that listens for a GET request to the path /hello
@@ -31,9 +33,11 @@ def get_books():
   connection.connect()
   book_repo = BookRepo(connection)
   books = book_repo.all()
+  print(books)
   return render_template("books.html", books=books)
 
 @app.route('/books', methods=['POST'])
+@login_required
 def create_book():
   connection = DatabaseConnection()
   connection.connect()
@@ -43,12 +47,51 @@ def create_book():
   book_repo.create(book)
   return redirect("/books")
 
+@app.route('/books/delete', methods=['POST'])
+@login_required
+def delete_book():
+  connection = DatabaseConnection()
+  connection.connect()
+  book_repo = BookRepo(connection)
+  book_delete = request.form
+  book_repo.delete(book_delete['id'])
+  return redirect('/books')
+
 @app.route('/users/new', methods=['GET'])
 def create_user():
    return render_template("signup_form.html")
 
 @app.route('/users', methods=['POST'])
 def submit_form():
+  connection = DatabaseConnection()
+  connection.connect()
+  user_repo = UserRepo(connection)
+  user_details = request.form
+  user = User(username=user_details['username'], password=user_details['password'])
+  user_repo.save(user)
+  return redirect("/books")
+
+@app.route('/sessions/new', methods=['GET'])
+def login_user():
+   return render_template("login_form.html")
+
+@app.route('/sessions', methods=['POST'])
+def check_user():
+  connection = DatabaseConnection()
+  connection.connect()
+  user_repo = UserRepo(connection)
+  check_user = request.form
+  user = user_repo.find_user(check_user['username'])
+  if user and check_user['password'] == user.password:
+     session['user_id'] = user.id
+     session['username'] = user.username
+     return redirect('/books')
+  else:
+     return redirect('/session/new')
+     
+
+@app.route('/users', methods=['POST'])
+def login():
   connection = DatabaseConnection()
   connection.connect()
   user_repo = UserRepo(connection)
