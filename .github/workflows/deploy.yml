@@ -1,7 +1,7 @@
 name: Deploy to EC2
 
 on:
-  workflows_run:
+  workflow_run:
     workflows: ["Continuous Integration"]
     types: [completed]
     branches: [ main ]
