@@ -1,5 +1,7 @@
 from playwright.sync_api import Page, expect
 from database_connection import *
+from user import *
+from user_repo import *
 
 def test_has_title(page: Page):
     page.goto("http://127.0.0.1:5001/books")
@@ -29,13 +31,15 @@ def test_books_form(page: Page):
     connection.connect()
     connection.seed("./seeds/books.sql")
     connection.execute("TRUNCATE TABLE users;")
-    connection.execute("INSERT INTO users (username, password) values ('test', '1234');")
+    user_repo = UserRepo(connection)
+    user = User('test', '1234')
+    user_repo.save(user)
 
     page.goto("http://localhost:5001/sessions/new")
     page.get_by_label("username").fill("test")
     page.get_by_label("password").fill("1234")
     page.get_by_role("button", name='login').click()
-    page.goto("http://localhost:5001/books")
+    page.goto("http://localhost:5001/books/new")
     page.get_by_label('Title').fill("Seires of unfortunate events")
     page.get_by_label("Author").fill("limmeny Snicket")
     page.get_by_role("button", name="Submit").click()

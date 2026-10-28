@@ -3,7 +3,7 @@ from database_connection import *
 from book_repo import *
 from user_repo import *
 from login_required import *
-
+import hashlib
 
 
 # instantiate a Flask app object
@@ -19,13 +19,6 @@ app.secret_key = "some_really_secret_key"
 def index():
     return render_template("index.html")
 
-@app.route('/hello', methods=['GET'])
-def hello():
-    return "Hello to you too"
-
-@app.route('/css', methods=['GET'])
-def css():
-    return render_template("css_practise.html")
 
 @app.route('/books', methods=['GET'])
 def get_books():
@@ -33,8 +26,13 @@ def get_books():
   connection.connect()
   book_repo = BookRepo(connection)
   books = book_repo.all()
-  print(books)
   return render_template("books.html", books=books)
+
+@app.route('/books/new', methods=["GET"])
+def create_new_book():
+   return render_template('new_book.html')
+
+
 
 @app.route('/books', methods=['POST'])
 @login_required
@@ -46,6 +44,14 @@ def create_book():
   book = Book(title=book_details['title'], author=book_details['author'])
   book_repo.create(book)
   return redirect("/books")
+
+@app.route('/books/<int:book_id>', methods=['GET'])
+def get_single_book(book_id):
+  connection = DatabaseConnection()
+  connection.connect()
+  book_repo = BookRepo(connection)
+  book = book_repo.find_book(book_id)
+  return render_template("book.html", book=book)
 
 @app.route('/books/delete', methods=['POST'])
 @login_required
@@ -67,7 +73,11 @@ def submit_form():
   connection.connect()
   user_repo = UserRepo(connection)
   user_details = request.form
-  user = User(username=user_details['username'], password=user_details['password'])
+  password = user_details['password']
+  salt = '5gz'
+  pwd_salt = password + salt
+  hash = hashlib.sha256(pwd_salt.encode())
+  user = User(username=user_details['username'], password=hash.hexdigest())
   user_repo.save(user)
   return redirect("/books")
 
@@ -81,8 +91,14 @@ def check_user():
   connection.connect()
   user_repo = UserRepo(connection)
   check_user = request.form
+  password = check_user['password']
+  salt = '5gz'
+  pwd_salt = password + salt
+  hash = hashlib.sha256(pwd_salt.encode())
   user = user_repo.find_user(check_user['username'])
-  if user and check_user['password'] == user.password:
+  print(hash.hexdigest())
+  print(user.password)
+  if user and hash.hexdigest() == user.password:
      session['user_id'] = user.id
      session['username'] = user.username
      return redirect('/books')

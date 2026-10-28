@@ -11,6 +11,11 @@ class BookRepo:
             item = Book(row['title'], row['author'], row['id'])
             books.append(item)
         return books
+    def find_book(self, book_id):
+        rows = self._connection.execute('SELECT * FROM books WHERE id = %s', [book_id])
+        row = rows[0]
+        return Book(row['title'], row['author'], row['id'])
+    
     def create(self, book):
         return self._connection.execute('INSERT INTO books (title, author) VALUES (%s, %s)', [book.title, book.author])
 
