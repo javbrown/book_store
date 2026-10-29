@@ -3,7 +3,7 @@ from database_connection import *
 from book_repo import *
 from user_repo import *
 from login_required import *
-import hashlib
+from encrypt_password import *
 
 
 # instantiate a Flask app object
@@ -91,14 +91,9 @@ def check_user():
   connection.connect()
   user_repo = UserRepo(connection)
   check_user = request.form
-  password = check_user['password']
-  salt = '5gz'
-  pwd_salt = password + salt
-  hash = hashlib.sha256(pwd_salt.encode())
+  password = encrypt_password(check_user['password'])
   user = user_repo.find_user(check_user['username'])
-  print(hash.hexdigest())
-  print(user.password)
-  if user and hash.hexdigest() == user.password:
+  if user and password == user.password:
      session['user_id'] = user.id
      session['username'] = user.username
      return redirect('/books')

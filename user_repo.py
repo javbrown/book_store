@@ -1,5 +1,5 @@
 from user import *
-import hashlib
+from encrypt_password import *
 
 class UserRepo:
     def __init__(self, connection):
@@ -13,11 +13,8 @@ class UserRepo:
             users.append(item)
         return users
     def save(self, user):
-        password = user.password
-        salt = '5gz'
-        pwd_salt = password + salt
-        hash = hashlib.sha256(pwd_salt.encode())
-        return self._connection.execute('INSERT INTO users (username, password) VALUES (%s, %s)', [user.username, hash.hexdigest()])
+        password = encrypt_password(user.password)
+        return self._connection.execute('INSERT INTO users (username, password) VALUES (%s, %s)', [user.username, password])
     
     def find_user(self, username):
         rows = self._connection.execute('SELECT * FROM users WHERE username = %s', [username])
